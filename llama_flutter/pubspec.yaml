@@ -40,6 +40,9 @@ dependencies:
   location: ^6.0.2
   weather: ^3.1.1
   geocoding: ^3.0.0
+  voice_assistant: ^1.0.1
+  livespeechtotext: ^1.0.9
+  flutter_tts: ^4.0.2
 
 dev_dependencies:
   flutter_test:
