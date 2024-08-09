@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:location/location.dart' as loc; // Alias the location package
+import 'package:location/location.dart' as loc;
 import 'package:udp/udp.dart';
 
 void main() {
@@ -36,12 +36,12 @@ class _UdpChatScreenState extends State<UdpChatScreen> {
 
   late UDP _udpClient;
   String? _locationAddress;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _initializeUdpClient();
-    _fetchAndStoreLocation();
   }
 
   void _initializeUdpClient() async {
@@ -59,8 +59,21 @@ class _UdpChatScreenState extends State<UdpChatScreen> {
             'content': message,
           });
         });
+        _scrollToBottom(); // Scroll to the bottom when a new message is added
       } else {
         print('Received null Datagram');
+      }
+    });
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
       }
     });
   }
@@ -115,14 +128,30 @@ class _UdpChatScreenState extends State<UdpChatScreen> {
         });
       });
 
-      if (_locationAddress != null) {
-        // Append the location data to the message
-        String messageWithLocation = '$message\nLocation: $_locationAddress';
-        _sendUdpMessage(messageWithLocation);
-      } else {
-        _sendUdpMessage(message);
+      // Check if the message requires location data
+      if (_requiresLocationData(message)) {
+        await _fetchAndStoreLocation();
       }
+
+      String messageWithOptionalLocation = message;
+      if (_locationAddress != null && _requiresLocationData(message)) {
+        messageWithOptionalLocation = '$message\nLocation: $_locationAddress';
+      }
+
+      _sendUdpMessage(messageWithOptionalLocation);
+
+      _scrollToBottom(); // Scroll to the bottom after sending a message
     }
+  }
+
+  bool _requiresLocationData(String message) {
+    // Remove punctuation from the message and convert to lowercase
+    final normalizedMessage =
+        message.toLowerCase().replaceAll(RegExp(r'[^\w\s]'), '');
+
+    // Check for keywords that imply location-based information is needed
+    final keywords = ['location', 'weather', 'near me'];
+    return keywords.any((keyword) => normalizedMessage.contains(keyword));
   }
 
   void _sendUdpMessage(String message) async {
@@ -168,6 +197,7 @@ class _UdpChatScreenState extends State<UdpChatScreen> {
               chatHistory: _chatHistories[topics[_selectedIndex]]!,
               onSendMessage: _sendMessage,
               isGettingLocation: _locationAddress == null,
+              scrollController: _scrollController,
             ),
           ),
         ],
@@ -178,6 +208,7 @@ class _UdpChatScreenState extends State<UdpChatScreen> {
   @override
   void dispose() {
     _udpClient.close(); // Close the UDP socket when the app is closed
+    _scrollController.dispose(); // Dispose of the scroll controller
     super.dispose();
   }
 }
@@ -186,11 +217,14 @@ class ChatView extends StatelessWidget {
   final List<Map<String, String>> chatHistory;
   final Function(String) onSendMessage;
   final bool isGettingLocation;
+  final ScrollController scrollController;
 
-  ChatView(
-      {required this.chatHistory,
-      required this.onSendMessage,
-      required this.isGettingLocation});
+  ChatView({
+    required this.chatHistory,
+    required this.onSendMessage,
+    required this.isGettingLocation,
+    required this.scrollController,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -200,6 +234,7 @@ class ChatView extends StatelessWidget {
       children: [
         Expanded(
           child: ListView.builder(
+            controller: scrollController, // Attach the scroll controller
             itemCount: chatHistory.length,
             itemBuilder: (context, index) {
               final message = chatHistory[index];
@@ -232,6 +267,13 @@ class ChatView extends StatelessWidget {
                     hintText: 'Type a message',
                     border: OutlineInputBorder(),
                   ),
+                  onSubmitted: (text) {
+                    if (text.isNotEmpty) {
+                      onSendMessage(text);
+                      _controller.clear();
+                      _scrollToBottom(); // Scroll to the bottom after submitting a message
+                    }
+                  },
                 ),
               ),
               IconButton(
@@ -240,6 +282,7 @@ class ChatView extends StatelessWidget {
                   if (_controller.text.isNotEmpty) {
                     onSendMessage(_controller.text);
                     _controller.clear();
+                    _scrollToBottom(); // Scroll to the bottom after sending a message
                   }
                 },
               ),
@@ -248,5 +291,17 @@ class ChatView extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (scrollController.hasClients) {
+        scrollController.animateTo(
+          scrollController.position.maxScrollExtent,
+          duration: Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 }
