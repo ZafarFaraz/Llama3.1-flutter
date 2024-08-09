@@ -37,6 +37,9 @@ dependencies:
   cupertino_icons: ^1.0.6
   web_socket_channel: ^3.0.1
   udp: ^5.0.3
+  location: ^6.0.2
+  weather: ^3.1.1
+  geocoding: ^3.0.0
 
 dev_dependencies:
   flutter_test:

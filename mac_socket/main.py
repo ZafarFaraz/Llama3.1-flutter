@@ -9,7 +9,7 @@ CONVERSATION_DIR = "conversation_histories"
 # Ensure the directory exists
 os.makedirs(CONVERSATION_DIR, exist_ok=True)
 
-# Store conversation context per client
+# Store conversation context per client and topic
 conversation_contexts = {}
 
 def start_udp_server():
@@ -28,38 +28,55 @@ def start_udp_server():
         message = data.decode()
         print(f"Received message: {message} from {addr}")
 
+        # Check if the message is valid JSON
+        try:
+            message_json = json.loads(message)
+            topic = message_json.get('topic')
+            content = message_json.get('content')
+
+            if not topic or not content:
+                print(f"Invalid message format: {message}")
+                sock.sendto(b"Error: Invalid message format", addr)
+                continue
+
+        except json.JSONDecodeError as e:
+            print(f"Failed to decode JSON: {e}")
+            # Send an error response back to the client
+            sock.sendto(b"Error: Invalid JSON format", addr)
+            continue
+
         # Handle the message and generate a response
-        response_text = handle_message(message, addr)
+        response_text = handle_message(topic, content, addr)
 
         # Send the response back to the client
         if response_text:
             sock.sendto(response_text.encode(), addr)
 
-def handle_message(message, client_address):
+def handle_message(topic, message, client_address):
     model_name = "llama3.1"
     api_url = "http://localhost:11434/api/chat"
 
     # Convert client address to a string to use as a file name
-    client_id = f"{client_address[0]}_{client_address[1]}"
+    client_id = f"{client_address[0]}_{client_address[1]}_{topic.replace(' ', '_')}"
     json_file_path = os.path.join(CONVERSATION_DIR, f"{client_id}.json")
 
     # Load existing conversation context from file if it exists
     if os.path.exists(json_file_path):
         with open(json_file_path, "r") as json_file:
-            conversation_contexts[client_address] = json.load(json_file)
+            conversation_contexts[client_id] = json.load(json_file)
     else:
-        conversation_contexts[client_address] = []
+        conversation_contexts[client_id] = []
 
     # Append the new user message to the conversation context
-    conversation_contexts[client_address].append({
+    conversation_contexts[client_id].append({
         "role": "user",
         "content": message
     })
 
-    # Prepare the data including the entire conversation context
+    # Prepare the data including the entire conversation context (excluding topic)
     data = {
         "model": model_name,
-        "messages": conversation_contexts[client_address],
+        "messages": conversation_contexts[client_id],
         "stream": False  # Add the "stream" field as in your successful test
     }
 
@@ -92,14 +109,14 @@ def handle_message(message, client_address):
         response_message = result_json.get('message', {}).get('content', 'No response received')
 
         # Append the assistant's response to the conversation context
-        conversation_contexts[client_address].append({
+        conversation_contexts[client_id].append({
             "role": "assistant",
             "content": response_message
         })
 
         # Save the updated conversation context back to the file
         with open(json_file_path, "w") as json_file:
-            json.dump(conversation_contexts[client_address], json_file, indent=4)
+            json.dump(conversation_contexts[client_id], json_file, indent=4)
 
     except json.JSONDecodeError as e:
         # Handle JSON parsing errors
