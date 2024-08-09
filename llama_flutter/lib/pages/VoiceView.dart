@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:livespeechtotext/livespeechtotext.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
+import '../Components/audioVisualizer.dart';
 import '../Services/location.dart';
 import '../Services/udp.dart';
 import '../Services/utils.dart';
@@ -173,53 +174,32 @@ class _VoiceScreenState extends State<VoiceScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: Center(
-        child: GestureDetector(
-          onTap: _isListening ? _stopListening : _startListening,
-          child: Container(
-            width: 150,
-            height: 150,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: _isListening
-                  ? Colors.red.withOpacity(0.8)
-                  : (_isResponding ? Colors.blue.withOpacity(0.8) : Colors.red),
-            ),
-            child: Center(
-              child: _isListening || _isResponding
-                  ? AudiogramVisual(
-                      isListening: _isListening, isResponding: _isResponding)
-                  : Text(
-                      'Tap to Speak',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            GestureDetector(
+              onTap: _isListening ? _stopListening : _startListening,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  CircularVisualizer(
+                    isListening: _isListening,
+                    isResponding: _isResponding,
+                  ),
+                  Text(
+                    'Tap to Speak',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
+                  ),
+                ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
-    );
-  }
-}
-
-class AudiogramVisual extends StatelessWidget {
-  final bool isListening;
-  final bool isResponding;
-
-  const AudiogramVisual(
-      {required this.isListening, required this.isResponding});
-
-  @override
-  Widget build(BuildContext context) {
-    // Placeholder for an audiogram visual. You can replace this with an actual visualizer implementation.
-    return Icon(
-      isListening
-          ? Icons.hearing
-          : (isResponding ? Icons.volume_up : Icons.mic),
-      color: Colors.white,
-      size: 50,
     );
   }
 }

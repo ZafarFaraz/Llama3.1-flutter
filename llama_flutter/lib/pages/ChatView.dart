@@ -96,6 +96,7 @@ class _UdpChatScreenState extends State<UdpChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       body: Row(
         children: [
           NavigationRail(
