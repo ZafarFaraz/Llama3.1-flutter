@@ -43,6 +43,7 @@ dependencies:
   voice_assistant: ^1.0.1
   livespeechtotext: ^1.0.9
   flutter_tts: ^4.0.2
+  speech_to_text: ^6.6.0
 
 dev_dependencies:
   flutter_test:

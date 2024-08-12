@@ -13,11 +13,10 @@ class UdpChatScreen extends StatefulWidget {
 
 class _UdpChatScreenState extends State<UdpChatScreen> {
   int _selectedIndex = 0;
-  final List<String> topics = ['Topic 1', 'Topic 2', 'Topic 3'];
+  final List<String> topics = ['Topic 1', 'Topic 2'];
   final Map<String, List<Map<String, String>>> _chatHistories = {
     'Topic 1': [],
     'Topic 2': [],
-    'Topic 3': [],
   };
 
   late UdpService _udpService;
@@ -30,7 +29,7 @@ class _UdpChatScreenState extends State<UdpChatScreen> {
     super.initState();
     _udpService = UdpService();
     _locationService = LocationService();
-    _udpService.initializeUdpClient(_onMessageReceived);
+    _udpService.initializeUdpClient(_onMessageReceived, true);
   }
 
   void _onMessageReceived(String message) {

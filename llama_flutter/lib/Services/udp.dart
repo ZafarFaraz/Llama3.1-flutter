@@ -1,11 +1,33 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:udp/udp.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 
 class UdpService {
   late UDP _udpClient;
+  late FlutterTts _flutterTts;
 
-  Future<void> initializeUdpClient(Function(String) onMessageReceived) async {
+  UdpService() {
+    _flutterTts = FlutterTts();
+    _initializeTts();
+  }
+
+  Future<void> _initializeTts() async {
+    await _flutterTts.setLanguage('en-US');
+    await _flutterTts.setPitch(1.0);
+    await _flutterTts.setIosAudioCategory(
+        IosTextToSpeechAudioCategory.playback,
+        [
+          IosTextToSpeechAudioCategoryOptions.allowBluetooth,
+          IosTextToSpeechAudioCategoryOptions.allowBluetoothA2DP,
+          IosTextToSpeechAudioCategoryOptions.mixWithOthers,
+          IosTextToSpeechAudioCategoryOptions.defaultToSpeaker
+        ],
+        IosTextToSpeechAudioMode.defaultMode);
+  }
+
+  Future<void> initializeUdpClient(
+      Function(String) onMessageReceived, bool chatMode) async {
     _udpClient = await UDP
         .bind(Endpoint.any(port: Port(0))); // Bind to any available port
 
@@ -15,8 +37,36 @@ class UdpService {
         String message = String.fromCharCodes(datagram.data);
         onMessageReceived(
             message); // Call the callback with the received message
+        if (!chatMode) {
+          _speak(message);
+        } // Read the message out loud if not in chat mode
       }
     });
+  }
+
+  Future<void> _speak(String text) async {
+    // Sanitize the text by escaping problematic characters
+    String sanitizedText = text.replaceAll("'", "");
+
+    // Set completion and error handlers before starting TTS
+    _flutterTts.setCompletionHandler(() {
+      print("Speech completed");
+    });
+
+    _flutterTts.setErrorHandler((msg) {
+      print("TTS Error: $msg");
+    });
+
+    // Wait for any ongoing speech to complete before starting new one
+    await _flutterTts.awaitSpeakCompletion(true);
+
+    // Ensure the TTS starts after the delay
+    var result = await _flutterTts.speak(sanitizedText);
+    if (result == 1) {
+      print("Speech started successfully");
+    } else {
+      print("Failed to start speech");
+    }
   }
 
   Future<void> sendUdpMessage(
