@@ -86,6 +86,16 @@ class _UdpChatScreenState extends State<UdpChatScreen> {
     }
   }
 
+  _addTopic(String topic) {
+    setState(() {
+      if (!topics.contains(topic)) {
+        topics.add(topic);
+        _chatHistories[topic] =
+            []; // Initialize an empty chat history for the new topic
+      }
+    });
+  }
+
   @override
   void dispose() {
     _udpService.dispose(); // Dispose UDP service
@@ -101,6 +111,13 @@ class _UdpChatScreenState extends State<UdpChatScreen> {
       backgroundColor: isDarkMode ? Colors.black : Colors.grey,
       body: Row(
         children: [
+          FloatingActionButton(
+            child: Icon(Icons.add),
+            onPressed: () {
+              // Example of adding a new topic
+              _addTopic('Topic ${topics.length + 1}');
+            },
+          ),
           NavigationRail(
             selectedIndex: _selectedIndex,
             onDestinationSelected: (int index) {
