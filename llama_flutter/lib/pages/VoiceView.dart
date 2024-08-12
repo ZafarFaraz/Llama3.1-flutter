@@ -52,6 +52,8 @@ class _VoiceScreenState extends State<VoiceScreen> {
         _localeDisplayName = value;
       });
     });
+
+    _speak('Welcome to voice chat');
   }
 
   @override
@@ -171,8 +173,11 @@ class _VoiceScreenState extends State<VoiceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    bool isDarkMode =
+        MediaQuery.of(context).platformBrightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: isDarkMode ? Colors.black : Colors.grey,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

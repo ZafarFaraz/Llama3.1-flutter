@@ -95,8 +95,10 @@ class _UdpChatScreenState extends State<UdpChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    bool isDarkMode =
+        MediaQuery.of(context).platformBrightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: isDarkMode ? Colors.black : Colors.grey,
       body: Row(
         children: [
           NavigationRail(
