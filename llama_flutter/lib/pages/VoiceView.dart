@@ -36,7 +36,7 @@ class _VoiceScreenState extends State<VoiceScreen> {
   void initState() {
     super.initState();
     _liveSpeechToText = Livespeechtotext();
-    _flutterTts = FlutterTts();
+    initTts();
     _udpService = UdpService();
     _locationService = LocationService();
 
@@ -62,6 +62,20 @@ class _VoiceScreenState extends State<VoiceScreen> {
     _udpService.dispose();
     _flutterTts.stop(); // Stop any ongoing TTS when the screen is disposed
     super.dispose();
+  }
+
+  Future<dynamic> initTts() async {
+    _flutterTts = FlutterTts();
+    await _flutterTts.setSharedInstance(true);
+    await _flutterTts.setIosAudioCategory(
+        IosTextToSpeechAudioCategory.playback,
+        [
+          IosTextToSpeechAudioCategoryOptions.allowBluetooth,
+          IosTextToSpeechAudioCategoryOptions.allowBluetoothA2DP,
+          IosTextToSpeechAudioCategoryOptions.mixWithOthers,
+          IosTextToSpeechAudioCategoryOptions.defaultToSpeaker
+        ],
+        IosTextToSpeechAudioMode.defaultMode);
   }
 
   String _generateUniqueTopic() {
@@ -151,6 +165,7 @@ class _VoiceScreenState extends State<VoiceScreen> {
 
     // Check if speaking is available and then speak
     var result = await _flutterTts.speak(text);
+    await _flutterTts.awaitSpeakCompletion(true);
     if (result == 1) {
       print("Speech started successfully");
     } else {
