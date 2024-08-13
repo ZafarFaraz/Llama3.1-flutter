@@ -197,7 +197,8 @@ class ChatView extends StatelessWidget {
                   controller: _controller,
                   decoration: InputDecoration(
                     hintText: 'Type a message',
-                    border: OutlineInputBorder(),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30)),
                   ),
                   onSubmitted: (text) {
                     if (text.isNotEmpty) {

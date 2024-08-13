@@ -14,7 +14,8 @@ class UdpService {
 
   Future<void> _initializeTts() async {
     await _flutterTts.setLanguage('en-US');
-    await _flutterTts.setPitch(1.0);
+    await _flutterTts
+        .setVoice({"name": "en-us-x-sfg#male_2-local", "locale": "en-US"});
     await _flutterTts.setIosAudioCategory(
         IosTextToSpeechAudioCategory.playback,
         [
@@ -62,6 +63,7 @@ class UdpService {
 
     // Ensure the TTS starts after the delay
     var result = await _flutterTts.speak(sanitizedText);
+    print(sanitizedText);
     if (result == 1) {
       print("Speech started successfully");
     } else {

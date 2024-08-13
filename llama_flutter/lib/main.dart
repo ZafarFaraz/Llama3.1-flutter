@@ -27,7 +27,7 @@ class CommMode extends StatefulWidget {
 class _CommState extends State<CommMode> {
   int _selectedIndex = 0;
 
-  static const List<Widget> _pages = <Widget>[UdpChatScreen(), VoiceScreen()];
+  static const List<Widget> _pages = <Widget>[UdpChatScreen(), VoiceView()];
 
   void _onItemTapped(int index) {
     setState(() {
