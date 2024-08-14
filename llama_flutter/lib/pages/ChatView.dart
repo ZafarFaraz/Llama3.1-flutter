@@ -33,6 +33,7 @@ class _UdpChatScreenState extends State<UdpChatScreen> {
     _locationService = LocationService();
     _udpService.initializeUdpClient(_onMessageReceived, true);
     _loadAccessories();
+    _sendMessage('turn off TV Lamp');
   }
 
   Future<void> _loadAccessories() async {
@@ -43,17 +44,18 @@ class _UdpChatScreenState extends State<UdpChatScreen> {
         _selectedHome = _homeAccessories.keys.first;
       }
     });
-    print(_homeAccessories);
   }
 
   void _onMessageReceived(String message) {
     print('Received response: $message');
+
     setState(() {
       _chatHistories[topics[_selectedIndex]]?.add({
         'role': 'assistant',
         'content': message,
       });
     });
+
     _scrollToBottom(); // Scroll to the bottom when a new message is added
   }
 
@@ -71,6 +73,7 @@ class _UdpChatScreenState extends State<UdpChatScreen> {
 
   Future<void> _sendMessage(String message) async {
     if (message.isNotEmpty) {
+      // Add the message to the chat history
       setState(() {
         _chatHistories[topics[_selectedIndex]]?.add({
           'role': 'user',
@@ -78,24 +81,43 @@ class _UdpChatScreenState extends State<UdpChatScreen> {
         });
       });
 
-      // Check if the message requires location data
-      if (Utils.requiresLocationData(message)) {
-        _locationAddress = await _locationService.fetchAndStoreLocation();
+      // Utility function to check if a message is a HomeKit command
+      bool _isHomeKitCommand(String message) {
+        String lowerMessage = message.toLowerCase();
+        return lowerMessage.startsWith('turn on') ||
+            lowerMessage.startsWith('turn off');
       }
 
-      String messageWithOptionalLocation = message;
-      if (_locationAddress != null && Utils.requiresLocationData(message)) {
-        messageWithOptionalLocation = '$message\nLocation: $_locationAddress';
+      // Intercept the message to check if it's a command for HomeKit
+      if (_isHomeKitCommand(message)) {
+        HomeManager.handleMessage(message);
+      } else {
+        // Check if the message requires location data
+        if (Utils.requiresLocationData(message)) {
+          _locationAddress = await _locationService.fetchAndStoreLocation();
+        }
+
+        if (Utils.requiresHomeInfo(message)) {
+          message =
+              '$message some home data information for you $_homeAccessories';
+        }
+
+        String messageWithOptionalLocation = message;
+        if (_locationAddress != null && Utils.requiresLocationData(message)) {
+          messageWithOptionalLocation = '$message\nLocation: $_locationAddress';
+        }
+
+        // If not a HomeKit command, send the message to the AI
+        _udpService.sendUdpMessage(
+          messageWithOptionalLocation,
+          topics[_selectedIndex],
+          '10.0.0.122', // Server IP address
+          8765, // Server port
+        );
       }
 
-      _udpService.sendUdpMessage(
-        messageWithOptionalLocation,
-        topics[_selectedIndex],
-        '10.0.0.122', // Server IP address
-        8765, // Server port
-      );
-
-      _scrollToBottom(); // Scroll to the bottom after sending a message
+      // Scroll to the bottom after sending a message
+      _scrollToBottom();
     }
   }
 

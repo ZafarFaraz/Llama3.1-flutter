@@ -39,45 +39,49 @@ class HomeManager: NSObject, HMHomeManagerDelegate {
             }
         }
 
-        print("Fetched accessories: ", accessoriesList)
         completion(accessoriesList)
     }
 
     func toggleAccessory(name: String, room: String, completion: @escaping (Bool, Error?) -> Void) {
         for home in homeManager.homes {
-            for accessory in home.accessories {
-                if accessory.name == name && accessory.room?.name == room {
-                    for service in accessory.services {
-                        if service.serviceType == HMServiceTypeLightbulb {
-                            for characteristic in service.characteristics {
-                                if characteristic.characteristicType == HMCharacteristicTypePowerState {
-                                    // Toggle the power state
-                                    characteristic.readValue { error in
-                                        if let error = error {
-                                            completion(false, error)
-                                        } else if let currentValue = characteristic.value as? Bool {
-                                            let newValue = !currentValue
-                                            characteristic.writeValue(newValue) { error in
-                                                if let error = error {
-                                                    completion(false, error)
-                                                } else {
-                                                    completion(true, nil)
-                                                }
-                                            }
-                                        } else {
-                                            completion(false, NSError(domain: "HomeManager", code: 500, userInfo: [NSLocalizedDescriptionKey: "Unable to read power state"]))
-                                        }
-                                    }
-                                    return
-                                }
-                            }
-                        }
+            guard let accessory = home.accessories.first(where: { $0.name == name && $0.room?.name == room }) else {
+                continue
+            }
+
+            guard let lightbulbService = accessory.services.first(where: { $0.serviceType == HMServiceTypeLightbulb }) else {
+                continue
+            }
+
+            guard let powerStateCharacteristic = lightbulbService.characteristics.first(where: { $0.characteristicType == HMCharacteristicTypePowerState }) else {
+                continue
+            }
+
+            powerStateCharacteristic.readValue { error in
+                if let error = error {
+                    completion(false, error)
+                    return
+                }
+
+                guard let currentValue = powerStateCharacteristic.value as? Bool else {
+                    completion(false, NSError(domain: "HomeManager", code: 500, userInfo: [NSLocalizedDescriptionKey: "Unable to read power state"]))
+                    return
+                }
+
+                let newValue = !currentValue
+                powerStateCharacteristic.writeValue(newValue) { error in
+                    if let error = error {
+                        completion(false, error)
+                    } else {
+                        completion(true, nil)
                     }
                 }
             }
+            return
         }
         completion(false, NSError(domain: "HomeManager", code: 404, userInfo: [NSLocalizedDescriptionKey: "Accessory not found"]))
     }
+
+
 
     func setLightColor(name: String, room: String, hue: CGFloat, saturation: CGFloat, brightness: CGFloat, completion: @escaping (Bool, Error?) -> Void) {
         for home in homeManager.homes {
@@ -142,5 +146,33 @@ class HomeManager: NSObject, HMHomeManagerDelegate {
             }
         }
         completion(false, NSError(domain: "HomeManager", code: 404, userInfo: [NSLocalizedDescriptionKey: "Accessory not found"]))
+    }
+    
+    func getAccessoryState(name: String, room: String, completion: @escaping (Bool?, Error?) -> Void) {
+        for home in homeManager.homes {
+            for accessory in home.accessories {
+                if accessory.name == name && accessory.room?.name == room {
+                    for service in accessory.services {
+                        if service.serviceType == HMServiceTypeLightbulb {
+                            for characteristic in service.characteristics {
+                                if characteristic.characteristicType == HMCharacteristicTypePowerState {
+                                    characteristic.readValue { error in
+                                        if let error = error {
+                                            completion(nil, error)
+                                        } else if let currentState = characteristic.value as? Bool {
+                                            completion(currentState, nil)
+                                        } else {
+                                            completion(nil, NSError(domain: "HomeManager", code: 500, userInfo: [NSLocalizedDescriptionKey: "Unable to read power state"]))
+                                        }
+                                    }
+                                    return
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        completion(nil, NSError(domain: "HomeManager", code: 404, userInfo: [NSLocalizedDescriptionKey: "Accessory not found"]))
     }
 }

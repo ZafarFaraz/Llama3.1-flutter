@@ -20,30 +20,51 @@ import UIKit
     print("Method channel 'jarvis_data' set up successfully")
       
     dataChannel.setMethodCallHandler {[weak self] (call, result) in
+      guard let strongSelf = self else {
+        result(FlutterError(code: "ERROR", message: "Self is nil", details: nil))
+        return
+      }
       if call.method == "fetchAccessories" {
-        print("fetchAccessories method called from Flutter")
-        
         // Fetch accessories from HomeManager
-        self?.homeManager?.fetchAccessories() { accessories in
-          print("Fetched accessories: \(accessories)")
+        strongSelf.homeManager?.fetchAccessories() { accessories in
           result(accessories)
         }
-      } else if call.method == "toggleAccessory" {
-        if let args = call.arguments as? [String: Any],
-           let name = args["name"] as? String,
-           let room = args["room"] as? String {
-          print("toggleAccessory called with name: \(name), room: \(room)")
-          
-          // Toggle the accessory state
-          self?.homeManager?.toggleAccessory(name: name, room: room) { success, error in
-            if success {
-              result(nil)
-            } else {
-              result(FlutterError(code: "ERROR", message: "Error toggling accessory", details: error?.localizedDescription))
+      } else if call.method == "getAccessoryState" {
+          if let args = call.arguments as? [String: Any],
+             let name = args["name"] as? String,
+             let room = args["room"] as? String {
+            strongSelf.homeManager?.getAccessoryState(name: name, room: room) { state, error in
+              if let state = state {
+                result(state)
+              } else {
+                result(FlutterError(code: "ERROR", message: "Error fetching state", details: error?.localizedDescription))
+              }
             }
+          } else {
+              result(FlutterError(code: "ERROR", message: "Invalid arguments", details: nil))
           }
-        }
-      } else {
+        } else if call.method == "toggleAccessory" {
+            print("method was called")
+            if let args = call.arguments as? [String: Any],
+               let name = args["name"] as? String,
+               let room = args["room"] as? String {
+//              // Ensure case-insensitive and trimmed matching
+//              let lowercasedName = name.lowercased().trimmingCharacters(in: .whitespaces)
+//              let lowercasedRoom = room.lowercased().trimmingCharacters(in: .whitespaces)
+              
+              strongSelf.homeManager?.toggleAccessory(name: name, room: room) { success, error in
+                  
+                   print(name, room)
+                if success {
+                  result(nil)
+                } else {
+                  result(FlutterError(code: "ERROR", message: "Error toggling accessory", details: error?.localizedDescription))
+                }
+              }
+            } else {
+                result(FlutterError(code: "ERROR", message: "Invalid arguments", details: nil))
+            }
+          } else {
         result(FlutterMethodNotImplemented)
       }
     }
