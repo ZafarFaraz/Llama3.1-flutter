@@ -23,6 +23,8 @@ class _UdpChatScreenState extends State<UdpChatScreen> {
   late LocationService _locationService;
   String? _locationAddress;
   final ScrollController _scrollController = ScrollController();
+  Map<String, Map<String, List<Map<String, String>>>> _homeAccessories = {};
+  String? _selectedHome;
 
   @override
   void initState() {
@@ -30,6 +32,18 @@ class _UdpChatScreenState extends State<UdpChatScreen> {
     _udpService = UdpService();
     _locationService = LocationService();
     _udpService.initializeUdpClient(_onMessageReceived, true);
+    _loadAccessories();
+  }
+
+  Future<void> _loadAccessories() async {
+    final homeAccessories = await HomeManager.fetchAccessories();
+    setState(() {
+      _homeAccessories = homeAccessories;
+      if (_homeAccessories.isNotEmpty) {
+        _selectedHome = _homeAccessories.keys.first;
+      }
+    });
+    print(_homeAccessories);
   }
 
   void _onMessageReceived(String message) {
