@@ -81,6 +81,16 @@ lib/
 - **WebSocket Server Address:** Update the server address in the `UdpService` class in `udp.dart`.
 - **TTS Language and Pitch:** Customize the TTS language and pitch in the `_initializeTts` method in `UdpService`.
 
+### Screenshots
+
+1. **Chat Mode**
+   
+   ![IMG_0011](https://github.com/user-attachments/assets/595a2dc7-de7c-4ecf-947b-2b26779ae3a5)
+
+2. **Voice Mode**
+   
+   ![IMG_0010](https://github.com/user-attachments/assets/869251b9-6fd1-4d94-8db4-7a4284df777e)
+
 ## Contributing
 
 Contributions are welcome! If you find any issues or want to add new features, feel free to submit a pull request.
