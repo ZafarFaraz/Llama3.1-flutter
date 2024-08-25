@@ -6,7 +6,9 @@ import '../Services/udp.dart';
 import '../Services/utils.dart';
 
 class VoiceView extends StatefulWidget {
-  const VoiceView({super.key});
+  final List<String> topics;
+
+  const VoiceView({super.key, required this.topics});
 
   @override
   _VoiceViewState createState() => _VoiceViewState();
@@ -14,11 +16,7 @@ class VoiceView extends StatefulWidget {
 
 class _VoiceViewState extends State<VoiceView> {
   int _selectedIndex = 0;
-  final List<String> topics = ['Topic 1', 'Topic 2'];
-  final Map<String, List<Map<String, String>>> _chatHistories = {
-    'Topic 1': [],
-    'Topic 2': [],
-  };
+  final Map<String, List<Map<String, String>>> _chatHistories = {};
 
   late UdpService _udpService;
   late LocationService _locationService;
@@ -37,12 +35,15 @@ class _VoiceViewState extends State<VoiceView> {
     _locationService = LocationService();
     _udpService.initializeUdpClient(_onMessageReceived, false);
     _speech = stt.SpeechToText();
+    widget.topics.forEach((topic) {
+      _chatHistories[topic] = [];
+    });
   }
 
   void _onMessageReceived(String message) {
     print('Received response: $message');
     setState(() {
-      _chatHistories[topics[_selectedIndex]]?.add({
+      _chatHistories[widget.topics[_selectedIndex]]?.add({
         'role': 'assistant',
         'content': message,
       });
@@ -66,7 +67,7 @@ class _VoiceViewState extends State<VoiceView> {
   Future<void> _sendMessage(String message) async {
     if (message.isNotEmpty) {
       setState(() {
-        _chatHistories[topics[_selectedIndex]]
+        _chatHistories[widget.topics[_selectedIndex]]
             ?.add({'role': 'user', 'content': message});
       });
 
@@ -83,7 +84,7 @@ class _VoiceViewState extends State<VoiceView> {
 
       _udpService.sendUdpMessage(
         messageWithOptionalLocation,
-        topics[_selectedIndex],
+        widget.topics[_selectedIndex],
         '10.0.0.122', // Server IP address
         8765, // Server port
       );
@@ -117,8 +118,8 @@ class _VoiceViewState extends State<VoiceView> {
 
   _addTopic(String topic) {
     setState(() {
-      if (!topics.contains(topic)) {
-        topics.add(topic);
+      if (!widget.topics.contains(topic)) {
+        widget.topics.add(topic);
         _chatHistories[topic] = [];
       }
     });
@@ -141,12 +142,6 @@ class _VoiceViewState extends State<VoiceView> {
       backgroundColor: isDarkMode ? Colors.black : Colors.grey,
       body: Row(
         children: [
-          FloatingActionButton(
-            child: Icon(Icons.add),
-            onPressed: () {
-              _addTopic('Topic ${topics.length + 1}');
-            },
-          ),
           NavigationRail(
             selectedIndex: _selectedIndex,
             onDestinationSelected: (int index) {
@@ -155,22 +150,23 @@ class _VoiceViewState extends State<VoiceView> {
               });
             },
             labelType: NavigationRailLabelType.selected,
-            destinations: topics.map((topic) {
+            destinations: widget.topics.map((topic) {
               return NavigationRailDestination(
-                icon: Icon(Icons.topic),
+                icon: Icon(Icons.mic), // Voice topic icon
                 label: Text(topic),
               );
             }).toList(),
           ),
           Expanded(
             child: ChatView(
-              chatHistory: _chatHistories[topics[_selectedIndex]]!,
+              chatHistory: _chatHistories[widget.topics[_selectedIndex]]!,
               onSendMessage: _sendMessage,
               isGettingLocation: _locationAddress == null,
               scrollController: _scrollController,
               controller: _controller,
               onMicPressed: _startListening,
               isListening: _isListening,
+              isDarkMode: isDarkMode,
             ),
           ),
         ],
@@ -187,6 +183,7 @@ class ChatView extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback onMicPressed;
   final bool isListening;
+  final bool isDarkMode;
 
   ChatView({
     required this.chatHistory,
@@ -196,57 +193,82 @@ class ChatView extends StatelessWidget {
     required this.controller,
     required this.onMicPressed,
     required this.isListening,
+    required this.isDarkMode,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Expanded(
-          child: ListView.builder(
-            controller: scrollController,
-            itemCount: chatHistory.length,
-            itemBuilder: (context, index) {
-              final message = chatHistory[index];
-              final isUser = message['role'] == 'user';
-              return Align(
-                alignment:
-                    isUser ? Alignment.centerRight : Alignment.centerLeft,
-                child: Container(
-                  padding: EdgeInsets.all(10),
-                  margin: EdgeInsets.all(5),
-                  decoration: BoxDecoration(
-                    color: isUser ? Colors.blue : Colors.grey[800],
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(message['content'] ?? ''),
-                ),
-              );
-            },
+    return Container(
+      margin: EdgeInsets.all(20), // Added margin for shadow space
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.all(Radius.circular(20)),
+        boxShadow: [
+          BoxShadow(
+            color: isDarkMode
+                ? Colors.purpleAccent.withAlpha(200)
+                : Colors.purpleAccent.withAlpha(250),
+            blurRadius: 25.0,
+            spreadRadius: 10.0,
+            offset: const Offset(0.0, 0.0), // Centered shadow for even spread
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: controller,
-                  decoration: InputDecoration(
-                    hintText: 'Say something...',
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30)),
+        ],
+        color: isDarkMode ? Colors.black : Colors.grey,
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(16), // Added padding inside the container
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView.builder(
+                controller: scrollController,
+                itemCount: chatHistory.length,
+                itemBuilder: (context, index) {
+                  final message = chatHistory[index];
+                  final isUser = message['role'] == 'user';
+                  return Align(
+                    alignment:
+                        isUser ? Alignment.centerRight : Alignment.centerLeft,
+                    child: Container(
+                      padding: EdgeInsets.all(10),
+                      margin: EdgeInsets.symmetric(vertical: 5),
+                      decoration: BoxDecoration(
+                        color: isUser ? Colors.purple : Colors.grey[800],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        message['content'] ?? '',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: controller,
+                      decoration: InputDecoration(
+                        hintText: 'Say something...',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  IconButton(
+                    icon: Icon(isListening ? Icons.mic_off : Icons.mic),
+                    onPressed: onMicPressed,
+                  ),
+                ],
               ),
-              IconButton(
-                icon: Icon(isListening ? Icons.mic_off : Icons.mic),
-                onPressed: onMicPressed,
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
