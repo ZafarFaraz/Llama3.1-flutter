@@ -172,89 +172,91 @@ class ChatView extends StatelessWidget {
     TextEditingController _controller = TextEditingController();
 
     return Container(
-      margin: EdgeInsets.all(20),
-      decoration: BoxDecoration(
-          borderRadius: BorderRadius.all(Radius.circular(20)),
-          boxShadow: [
-            BoxShadow(
-                color: isDarkMode
-                    ? Colors.greenAccent.withAlpha(200)
-                    : Colors.greenAccent.withAlpha(250),
-                blurRadius: 25.0,
-                spreadRadius: 10.0,
-                offset: const Offset(0.0, 0.0)),
-          ],
-          color: isDarkMode ? Colors.black : Colors.grey),
-      child: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              controller: scrollController, // Attach the scroll controller
-              itemCount: chatHistory.length,
-              itemBuilder: (context, index) {
-                final message = chatHistory[index];
-                final isUser = message['role'] == 'user';
-                return Align(
-                  alignment:
-                      isUser ? Alignment.centerRight : Alignment.centerLeft,
-                  child: Container(
-                    padding: EdgeInsets.all(10),
-                    margin: EdgeInsets.all(15),
-                    decoration: BoxDecoration(
-                      color: isUser
-                          ? const Color.fromARGB(255, 36, 91, 37)
-                          : Colors.grey[800],
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(message['content'] ?? ''),
-                  ),
-                );
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: InputDecoration(
-                      hintText: 'Type a message',
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30)),
-                    ),
-                    onSubmitted: (text) {
-                      if (text.isNotEmpty) {
-                        onSendMessage(text);
-                        _controller.clear();
-                        _scrollToBottom(); // Scroll to the bottom after submitting a message
-                      }
-                    },
-                  ),
+        margin: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+            borderRadius: BorderRadius.all(Radius.circular(20)),
+            boxShadow: [
+              BoxShadow(
+                  color: isDarkMode
+                      ? Colors.greenAccent.withAlpha(200)
+                      : Colors.greenAccent.withAlpha(250),
+                  blurRadius: 25.0,
+                  spreadRadius: 10.0,
+                  offset: const Offset(0.0, 0.0)),
+            ],
+            color: isDarkMode ? Colors.black : Colors.grey),
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  controller: scrollController, // Attach the scroll controller
+                  itemCount: chatHistory.length,
+                  itemBuilder: (context, index) {
+                    final message = chatHistory[index];
+                    final isUser = message['role'] == 'user';
+                    return Align(
+                      alignment:
+                          isUser ? Alignment.centerRight : Alignment.centerLeft,
+                      child: Container(
+                        padding: EdgeInsets.all(10),
+                        margin: EdgeInsets.all(15),
+                        decoration: BoxDecoration(
+                          color: isUser
+                              ? const Color.fromARGB(255, 36, 91, 37)
+                              : Colors.grey[800],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(message['content'] ?? ''),
+                      ),
+                    );
+                  },
                 ),
-                SizedBox(
-                  width: 20,
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _controller,
+                        decoration: InputDecoration(
+                          hintText: 'Type a message',
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(30)),
+                        ),
+                        onSubmitted: (text) {
+                          if (text.isNotEmpty) {
+                            onSendMessage(text);
+                            _controller.clear();
+                            _scrollToBottom(); // Scroll to the bottom after submitting a message
+                          }
+                        },
+                      ),
+                    ),
+                    SizedBox(
+                      width: 20,
+                    ),
+                    CircleAvatar(
+                      backgroundColor: Colors.green,
+                      child: IconButton(
+                        icon: Icon(Icons.send),
+                        onPressed: () {
+                          if (_controller.text.isNotEmpty) {
+                            onSendMessage(_controller.text);
+                            _controller.clear();
+                            _scrollToBottom(); // Scroll to the bottom after sending a message
+                          }
+                        },
+                      ),
+                    )
+                  ],
                 ),
-                CircleAvatar(
-                  backgroundColor: Colors.green,
-                  child: IconButton(
-                    icon: Icon(Icons.send),
-                    onPressed: () {
-                      if (_controller.text.isNotEmpty) {
-                        onSendMessage(_controller.text);
-                        _controller.clear();
-                        _scrollToBottom(); // Scroll to the bottom after sending a message
-                      }
-                    },
-                  ),
-                )
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
+        ));
   }
 
   void _scrollToBottom() {
