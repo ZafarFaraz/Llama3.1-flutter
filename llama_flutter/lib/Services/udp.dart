@@ -26,8 +26,6 @@ class UdpService {
       ],
       IosTextToSpeechAudioMode.defaultMode,
     );
-
-    await _flutterTts.speak('Welcome to my world');
   }
 
   Future<void> initializeUdpClient(
