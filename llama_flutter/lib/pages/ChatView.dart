@@ -199,9 +199,11 @@ class ChatView extends StatelessWidget {
                       isUser ? Alignment.centerRight : Alignment.centerLeft,
                   child: Container(
                     padding: EdgeInsets.all(10),
-                    margin: EdgeInsets.all(5),
+                    margin: EdgeInsets.all(15),
                     decoration: BoxDecoration(
-                      color: isUser ? Colors.green : Colors.grey[800],
+                      color: isUser
+                          ? const Color.fromARGB(255, 36, 91, 37)
+                          : Colors.grey[800],
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(message['content'] ?? ''),
@@ -231,16 +233,22 @@ class ChatView extends StatelessWidget {
                     },
                   ),
                 ),
-                IconButton(
-                  icon: Icon(Icons.send),
-                  onPressed: () {
-                    if (_controller.text.isNotEmpty) {
-                      onSendMessage(_controller.text);
-                      _controller.clear();
-                      _scrollToBottom(); // Scroll to the bottom after sending a message
-                    }
-                  },
+                SizedBox(
+                  width: 20,
                 ),
+                CircleAvatar(
+                  backgroundColor: Colors.green,
+                  child: IconButton(
+                    icon: Icon(Icons.send),
+                    onPressed: () {
+                      if (_controller.text.isNotEmpty) {
+                        onSendMessage(_controller.text);
+                        _controller.clear();
+                        _scrollToBottom(); // Scroll to the bottom after sending a message
+                      }
+                    },
+                  ),
+                )
               ],
             ),
           ),

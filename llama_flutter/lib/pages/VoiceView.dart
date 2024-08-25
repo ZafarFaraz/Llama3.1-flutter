@@ -259,10 +259,16 @@ class ChatView extends StatelessWidget {
                       ),
                     ),
                   ),
-                  IconButton(
-                    icon: Icon(isListening ? Icons.mic_off : Icons.mic),
-                    onPressed: onMicPressed,
+                  SizedBox(
+                    width: 20,
                   ),
+                  CircleAvatar(
+                    backgroundColor: Colors.purple,
+                    child: IconButton(
+                      icon: Icon(isListening ? Icons.mic_off : Icons.mic),
+                      onPressed: onMicPressed,
+                    ),
+                  )
                 ],
               ),
             ),
