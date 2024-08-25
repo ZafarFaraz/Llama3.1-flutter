@@ -1,5 +1,8 @@
+import 'dart:ffi';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:llama_flutter/pages/VoiceView.dart';
 
 import 'pages/ChatView.dart';
@@ -25,36 +28,37 @@ class CommMode extends StatefulWidget {
 }
 
 class _CommState extends State<CommMode> {
-  int _selectedIndex = 0;
+  bool isVoice = false;
+  final List<String> topics = ['Topic 1', 'Topic 2'];
 
-  static const List<Widget> _pages = <Widget>[UdpChatScreen(), VoiceView()];
-
-  void _onItemTapped(int index) {
+  void _addTopic() {
     setState(() {
-      _selectedIndex = index;
+      topics.add('Topic ${topics.length + 1}');
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.speaker_notes),
-            label: 'Text',
+      appBar: AppBar(
+        title: const Text('Jarvis'),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.add),
+            onPressed: _addTopic,
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Voice',
+          Switch(
+            value: isVoice,
+            activeColor: Colors.purple,
+            onChanged: (value) {
+              setState(() {
+                isVoice = value;
+              });
+            },
           ),
         ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.blue,
-        unselectedItemColor: Colors.grey,
-        onTap: _onItemTapped,
       ),
+      body: isVoice ? VoiceView(topics: topics) : TextView(topics: topics),
     );
   }
 }

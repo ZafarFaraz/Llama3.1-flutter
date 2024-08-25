@@ -13,18 +13,19 @@ class UdpService {
   }
 
   Future<void> _initializeTts() async {
-    await _flutterTts.setLanguage('en-US');
-    await _flutterTts
-        .setVoice({"name": "en-us-x-sfg#male_2-local", "locale": "en-US"});
+    await _flutterTts.setVoice({"name": "Oliver", "locale": "en-GB"});
+    await _flutterTts.setPitch(0.8); // Adjust pitch as needed
+    await _flutterTts.setSpeechRate(0.55); // Adjust speech rate as needed
+
     await _flutterTts.setIosAudioCategory(
-        IosTextToSpeechAudioCategory.playback,
-        [
-          IosTextToSpeechAudioCategoryOptions.allowBluetooth,
-          IosTextToSpeechAudioCategoryOptions.allowBluetoothA2DP,
-          IosTextToSpeechAudioCategoryOptions.mixWithOthers,
-          IosTextToSpeechAudioCategoryOptions.defaultToSpeaker
-        ],
-        IosTextToSpeechAudioMode.defaultMode);
+      IosTextToSpeechAudioCategory.playback,
+      [
+        IosTextToSpeechAudioCategoryOptions.allowBluetooth,
+        IosTextToSpeechAudioCategoryOptions.allowBluetoothA2DP,
+        IosTextToSpeechAudioCategoryOptions.mixWithOthers,
+      ],
+      IosTextToSpeechAudioMode.defaultMode,
+    );
   }
 
   Future<void> initializeUdpClient(
