@@ -4,16 +4,16 @@ import '../Services/location.dart';
 import '../Services/udp.dart';
 import '../Services/utils.dart';
 
-class UdpChatScreen extends StatefulWidget {
+class TextView extends StatefulWidget {
   final List<String> topics;
 
-  const UdpChatScreen({super.key, required this.topics});
+  const TextView({super.key, required this.topics});
 
   @override
   _UdpChatScreenState createState() => _UdpChatScreenState();
 }
 
-class _UdpChatScreenState extends State<UdpChatScreen> {
+class _UdpChatScreenState extends State<TextView> {
   int _selectedIndex = 0;
   final Map<String, List<Map<String, String>>> _chatHistories = {};
 

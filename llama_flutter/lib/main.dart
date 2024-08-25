@@ -58,7 +58,7 @@ class _CommState extends State<CommMode> {
           ),
         ],
       ),
-      body: isVoice ? VoiceView(topics: topics) : UdpChatScreen(topics: topics),
+      body: isVoice ? VoiceView(topics: topics) : TextView(topics: topics),
     );
   }
 }

@@ -158,7 +158,7 @@ class _VoiceViewState extends State<VoiceView> {
             }).toList(),
           ),
           Expanded(
-            child: ChatView(
+            child: VoiceChat(
               chatHistory: _chatHistories[widget.topics[_selectedIndex]]!,
               onSendMessage: _sendMessage,
               isGettingLocation: _locationAddress == null,
@@ -175,7 +175,7 @@ class _VoiceViewState extends State<VoiceView> {
   }
 }
 
-class ChatView extends StatelessWidget {
+class VoiceChat extends StatelessWidget {
   final List<Map<String, String>> chatHistory;
   final Function(String) onSendMessage;
   final bool isGettingLocation;
@@ -185,7 +185,7 @@ class ChatView extends StatelessWidget {
   final bool isListening;
   final bool isDarkMode;
 
-  ChatView({
+  VoiceChat({
     required this.chatHistory,
     required this.onSendMessage,
     required this.isGettingLocation,
