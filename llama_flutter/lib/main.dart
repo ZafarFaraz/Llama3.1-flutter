@@ -3,6 +3,7 @@ import 'dart:ffi';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:llama_flutter/Services/utils.dart';
 import 'package:llama_flutter/pages/VoiceView.dart';
 
 import 'pages/ChatView.dart';
@@ -31,10 +32,35 @@ class _CommState extends State<CommMode> {
   bool isVoice = false;
   final List<String> topics = ['Topic 1', 'Topic 2'];
 
+  List<Map<String, dynamic>> _events = [];
+  List<Map<String, dynamic>> _reminders = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadEventsAndReminders();
+  }
+
   void _addTopic() {
     setState(() {
       topics.add('Topic ${topics.length + 1}');
     });
+  }
+
+  Future<void> _loadEventsAndReminders() async {
+    final EventManager _eventManager = EventManager();
+    try {
+      List<Map<String, dynamic>> reminders =
+          await _eventManager.loadReminders();
+      print(
+          reminders); // Now this should print a correctly typed list of reminders.
+
+      List<Map<String, dynamic>> events =
+          await _eventManager.loadUpcomingEvents();
+      print("Upcoming Events: $events");
+    } catch (e) {
+      print("Error loading reminders: $e");
+    }
   }
 
   @override

@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 
+const MethodChannel _platform = MethodChannel('jarvis_data');
+
 class Utils {
   static bool requiresLocationData(String message) {
     // Remove punctuation from the message and convert to lowercase
@@ -32,9 +34,34 @@ class Utils {
   }
 }
 
-class HomeManager {
-  static const MethodChannel _platform = MethodChannel('jarvis_data');
+class EventManager {
+  Future<List<Map<String, dynamic>>> loadReminders() async {
+    try {
+      final List<dynamic> result =
+          await _platform.invokeMethod('loadReminders');
+      return result
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+    } on PlatformException catch (e) {
+      throw Exception("Failed to load reminders: ${e.message}");
+    }
+  }
 
+  Future<List<Map<String, dynamic>>> loadUpcomingEvents() async {
+    try {
+      final List<dynamic> result =
+          await _platform.invokeMethod('loadUpcomingEvents');
+      return result
+          .map((item) =>
+              Map<String, dynamic>.from(item as Map<dynamic, dynamic>))
+          .toList();
+    } on PlatformException catch (e) {
+      throw Exception("Failed to load upcoming events: ${e.message}");
+    }
+  }
+}
+
+class HomeManager {
   // Fetch accessories from the native side and group them by home and room
   static Future<Map<String, Map<String, List<Map<String, String>>>>>
       fetchAccessories() async {
