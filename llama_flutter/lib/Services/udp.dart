@@ -7,6 +7,9 @@ class UdpService {
   late UDP _udpClient;
   late FlutterTts _flutterTts;
 
+  String UDPAddress = "10.0.0.70";
+  int UDPPort = 8765;
+
   UdpService() {
     _flutterTts = FlutterTts();
     _initializeTts();
@@ -73,7 +76,9 @@ class UdpService {
   }
 
   Future<void> sendUdpMessage(
-      String message, String topic, String address, int port) async {
+    String message,
+    String topic,
+  ) async {
     final jsonPayload = jsonEncode({
       'topic': topic,
       'content': message,
@@ -83,8 +88,8 @@ class UdpService {
     await _udpClient.send(
       jsonPayload.codeUnits,
       Endpoint.unicast(
-        InternetAddress(address), // Server IP address
-        port: Port(port), // Server port
+        InternetAddress(UDPAddress), // Server IP address
+        port: Port(UDPPort), // Server port
       ),
     );
   }

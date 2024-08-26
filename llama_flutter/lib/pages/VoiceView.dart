@@ -83,11 +83,7 @@ class _VoiceViewState extends State<VoiceView> {
       }
 
       _udpService.sendUdpMessage(
-        messageWithOptionalLocation,
-        widget.topics[_selectedIndex],
-        '10.0.0.122', // Server IP address
-        8765, // Server port
-      );
+          messageWithOptionalLocation, widget.topics[_selectedIndex]);
 
       _scrollToBottom();
     }
