@@ -264,8 +264,12 @@ class VoiceChat extends StatelessWidget {
                   ),
                   CircleAvatar(
                     backgroundColor: Colors.purple,
+                    radius: 30,
                     child: IconButton(
-                      icon: Icon(isListening ? Icons.mic_off : Icons.mic),
+                      icon: Icon(
+                        isListening ? Icons.mic_off : Icons.mic,
+                        size: 30,
+                      ),
                       onPressed: onMicPressed,
                     ),
                   )

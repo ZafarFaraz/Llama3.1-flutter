@@ -240,8 +240,12 @@ class ChatView extends StatelessWidget {
                     ),
                     CircleAvatar(
                       backgroundColor: Colors.green,
+                      radius: 30,
                       child: IconButton(
-                        icon: Icon(Icons.send),
+                        icon: Icon(
+                          Icons.send,
+                          size: 30,
+                        ),
                         onPressed: () {
                           if (_controller.text.isNotEmpty) {
                             onSendMessage(_controller.text);
