@@ -16,6 +16,8 @@
 	<string>6.0</string>
 	<key>CFBundleName</key>
 	<string>llama_flutter</string>
+	<key>NSRemindersUsageDescription</key>
+	<string>This app needs access to Reminders</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -53,7 +55,13 @@
 	<string>This example listens for speech on the device microphone on your request.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>This example recognizes words as you speak them and displays them. </string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>This apps needs access to Calendars</string>
 	<key>NSHomeKitUsageDescription</key>
-    <string>This app requires access to your home data to control smart home accessories.</string>
+	<string>This app requires access to your home data to control smart home accessories.</string>
+    <key>NSCalendarsUsageDescription</key>
+    <string>We need access to your calendar to show your events.</string>
+    <key>NSRemindersUsageDescription</key>
+    <string>We need access to your reminders to manage and display them.</string>
 </dict>
 </plist>
