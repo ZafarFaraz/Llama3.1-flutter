@@ -13,7 +13,7 @@ os.makedirs(CONVERSATION_DIR, exist_ok=True)
 conversation_contexts = {}
 
 def start_udp_server():
-    udp_ip = "10.0.0.122"  # Your server's IP address
+    udp_ip = "10.0.0.70"  # Your server's IP address
     udp_port = 8765
     buffer_size = 1024
 

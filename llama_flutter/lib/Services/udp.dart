@@ -15,7 +15,7 @@ class UdpService {
   Future<void> _initializeTts() async {
     await _flutterTts.setVoice({"name": "Oliver", "locale": "en-GB"});
     await _flutterTts.setPitch(0.8); // Adjust pitch as needed
-    await _flutterTts.setSpeechRate(0.55); // Adjust speech rate as needed
+    await _flutterTts.setSpeechRate(0.35); // Adjust speech rate as needed
 
     await _flutterTts.setIosAudioCategory(
       IosTextToSpeechAudioCategory.playback,

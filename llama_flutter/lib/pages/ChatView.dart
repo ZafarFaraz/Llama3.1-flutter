@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../Services/location.dart';
 import '../Services/udp.dart';
 import '../Services/utils.dart';
 
@@ -10,19 +9,18 @@ class TextView extends StatefulWidget {
   const TextView({super.key, required this.topics});
 
   @override
-  _UdpChatScreenState createState() => _UdpChatScreenState();
+  _TextScreenState createState() => _TextScreenState();
 }
 
-class _UdpChatScreenState extends State<TextView> {
+class _TextScreenState extends State<TextView> {
   int _selectedIndex = 0;
   final Map<String, List<Map<String, String>>> _chatHistories = {};
 
   late UdpService _udpService;
   late LocationService _locationService;
+  final EventManager _eventManager = EventManager();
   String? _locationAddress;
   final ScrollController _scrollController = ScrollController();
-  Map<String, Map<String, List<Map<String, String>>>> _homeAccessories = {};
-  String? _selectedHome;
 
   @override
   void initState() {
@@ -30,19 +28,8 @@ class _UdpChatScreenState extends State<TextView> {
     _udpService = UdpService();
     _locationService = LocationService();
     _udpService.initializeUdpClient(_onMessageReceived, true);
-    _loadAccessories();
     widget.topics.forEach((topic) {
       _chatHistories[topic] = [];
-    });
-  }
-
-  Future<void> _loadAccessories() async {
-    final homeAccessories = await HomeManager.fetchAccessories();
-    setState(() {
-      _homeAccessories = homeAccessories;
-      if (_homeAccessories.isNotEmpty) {
-        _selectedHome = _homeAccessories.keys.first;
-      }
     });
   }
 
@@ -86,6 +73,8 @@ class _UdpChatScreenState extends State<TextView> {
       if (_locationAddress != null && Utils.requiresLocationData(message)) {
         messageWithOptionalLocation = '$message\nLocation: $_locationAddress';
       }
+
+      _eventManager.addInfoEventsAndReminders(message);
 
       _udpService.sendUdpMessage(
         messageWithOptionalLocation,

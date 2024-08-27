@@ -34,16 +34,29 @@ class _CommState extends State<CommMode> {
 
   List<Map<String, dynamic>> _events = [];
   List<Map<String, dynamic>> _reminders = [];
+  Map<String, Map<String, List<Map<String, String>>>> _homeAccessories = {};
+  String? _selectedHome;
 
   @override
   void initState() {
     super.initState();
     _loadEventsAndReminders();
+    _loadAccessories();
   }
 
   void _addTopic() {
     setState(() {
       topics.add('Topic ${topics.length + 1}');
+    });
+  }
+
+  Future<void> _loadAccessories() async {
+    final homeAccessories = await HomeManager.fetchAccessories();
+    setState(() {
+      _homeAccessories = homeAccessories;
+      if (_homeAccessories.isNotEmpty) {
+        _selectedHome = _homeAccessories.keys.first;
+      }
     });
   }
 
