@@ -65,21 +65,16 @@ class _TextScreenState extends State<TextView> {
         });
       });
 
-      if (Utils.requiresLocationData(message)) {
-        _locationAddress = await _locationService.fetchAndStoreLocation();
-      }
+      String messageWithOptionalLocation =
+          await _locationService.addLocationData(message);
 
-      String messageWithOptionalLocation = message;
-      if (_locationAddress != null && Utils.requiresLocationData(message)) {
-        messageWithOptionalLocation = '$message\nLocation: $_locationAddress';
-      }
-
-      _eventManager.addInfoEventsAndReminders(message);
+      String messageWithInfoAndReminders = await _eventManager
+          .addInfoEventsAndReminders(messageWithOptionalLocation);
 
       _udpService.sendUdpMessage(
-        messageWithOptionalLocation,
+        messageWithInfoAndReminders,
         widget.topics[_selectedIndex],
-        '10.0.0.122', // Server IP address
+        '10.0.0.70', // Server IP address
         8765, // Server port
       );
 

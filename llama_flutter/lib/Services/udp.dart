@@ -74,10 +74,16 @@ class UdpService {
 
   Future<void> sendUdpMessage(
       String message, String topic, String address, int port) async {
+    // Await the Future<String> to get the actual string value
+    final String messageContent = message;
+
+    // Create the JSON payload with the resolved message content
     final jsonPayload = jsonEncode({
       'topic': topic,
-      'content': message,
+      'content': messageContent,
     });
+
+    print("The message sent was $jsonPayload");
 
     // Send the message via UDP
     await _udpClient.send(

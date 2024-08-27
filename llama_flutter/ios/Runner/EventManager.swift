@@ -39,7 +39,7 @@ class EventManager: NSObject {
         eventStore.requestAccess(to: .event) { (granted, error) in
             if granted {
                 let startDate = Date()
-                let endDate = Calendar.current.date(byAdding: .year, value: 1, to: startDate)!
+                let endDate = Calendar.current.date(byAdding: .day, value: 7, to: startDate)!
                 let predicate = self.eventStore.predicateForEvents(withStart: startDate, end: endDate, calendars: nil)
                 
                 let events = self.eventStore.events(matching: predicate)

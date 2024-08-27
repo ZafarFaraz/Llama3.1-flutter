@@ -2,6 +2,7 @@ import socket
 import json
 import os
 import subprocess
+import shlex
 
 # Directory to store conversation history files
 CONVERSATION_DIR = "conversation_histories"
@@ -52,6 +53,7 @@ def start_udp_server():
         if response_text:
             sock.sendto(response_text.encode(), addr)
 
+
 def handle_message(topic, message, client_address):
     model_name = "llama3.1"
     api_url = "http://localhost:11434/api/chat"
@@ -80,22 +82,18 @@ def handle_message(topic, message, client_address):
         "stream": False  # Add the "stream" field as in your successful test
     }
 
-    json_data = json.dumps(data)
-
-    # Prepare the curl command string
-    curl_command = [
-        "curl",
-        api_url,
-        "-d", json_data,
-        "-H", "Content-Type: application/json"
-    ]
-
-    # Print the curl command for debugging
-    print(f"Executing command: {curl_command}")
-
     try:
+        # Convert the data to JSON string
+        json_data = json.dumps(data)
+
+        # Prepare the curl command string
+        curl_command = f'curl {shlex.quote(api_url)} -d {shlex.quote(json_data)} -H "Content-Type: application/json"'
+
+        # Print the curl command for debugging
+        print(f"Executing command: {curl_command}")
+
         # Execute the curl command using subprocess to capture stdout and stderr
-        result = subprocess.run(curl_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        result = subprocess.run(curl_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, shell=True)
 
         # Print the raw output for debugging purposes
         print(f"Raw curl output: {result.stdout}")
@@ -126,6 +124,7 @@ def handle_message(topic, message, client_address):
         response_message = f"Error executing curl command: {str(e)}"
     
     return response_message
+
 
 if __name__ == "__main__":
     start_udp_server()

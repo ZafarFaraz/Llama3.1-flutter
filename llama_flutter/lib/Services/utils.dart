@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
@@ -66,18 +67,21 @@ class EventManager {
     String lowerMessage = message.toLowerCase();
     final EventManager _eventManager = EventManager();
 
-    final keywords = ['looking'];
-    if (keywords.any((keyword) => lowerMessage.contains(keyword))) {
-      List<Map<String, dynamic>> reminders =
-          await _eventManager.loadReminders();
+    if (['looking'].any((keyword) => lowerMessage.contains(keyword))) {
+      final reminders = await _eventManager.loadReminders();
+      final events = await _eventManager.loadUpcomingEvents();
 
-      List<Map<String, dynamic>> events =
-          await _eventManager.loadUpcomingEvents();
+      // Construct a valid JSON string for events and reminders
+      final eventsJson = jsonEncode(events);
+      final remindersJson = jsonEncode(reminders);
 
-      return lowerMessage +
-          " here is some information from my calendar for the upcoming year - $events and my due reminders - $reminders";
+      // Sanitize the input message to remove or escape problematic characters
+      String sanitizedMessage = lowerMessage.replaceAll("'", "\\'");
+
+      // Construct the final message, ensuring it's safe for JSON inclusion
+      return "$sanitizedMessage. Here is some information from my calendar for the upcoming year: $eventsJson and my due reminders: $remindersJson";
     } else {
-      return " ";
+      return lowerMessage;
     }
   }
 }
@@ -221,6 +225,18 @@ class LocationService {
     } catch (e) {
       print('Failed to get address: $e');
       return 'Address unavailable';
+    }
+  }
+
+  Future<String> addLocationData(message) async {
+    String lowermessage =
+        message.toLowerCase().replaceAll(RegExp(r'[^\w\s]'), '');
+    if (['location', 'weather', 'near me']
+        .any((keyword) => lowermessage.contains(keyword))) {
+      String? locationAddress = await fetchAndStoreLocation();
+      return '$message my location is: $_locationAddress';
+    } else {
+      return lowermessage;
     }
   }
 }
