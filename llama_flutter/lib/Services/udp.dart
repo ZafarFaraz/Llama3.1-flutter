@@ -6,6 +6,8 @@ import 'package:flutter_tts/flutter_tts.dart';
 class UdpService {
   late UDP _udpClient;
   late FlutterTts _flutterTts;
+  String udpAddress = "10.0.0.73";
+  int udpPort = 8765;
 
   UdpService() {
     _flutterTts = FlutterTts();
@@ -72,8 +74,7 @@ class UdpService {
     }
   }
 
-  Future<void> sendUdpMessage(
-      String message, String topic, String address, int port) async {
+  Future<void> sendUdpMessage(String message, String topic) async {
     // Await the Future<String> to get the actual string value
     final String messageContent = message;
 
@@ -89,8 +90,8 @@ class UdpService {
     await _udpClient.send(
       jsonPayload.codeUnits,
       Endpoint.unicast(
-        InternetAddress(address), // Server IP address
-        port: Port(port), // Server port
+        InternetAddress(udpAddress), // Server IP address
+        port: Port(udpPort), // Server port
       ),
     );
   }

@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:ffi';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:llama_flutter/Services/udp.dart';
 import 'package:llama_flutter/Services/utils.dart';
 import 'package:llama_flutter/pages/VoiceView.dart';
 
@@ -31,6 +33,8 @@ class CommMode extends StatefulWidget {
 class _CommState extends State<CommMode> {
   bool isVoice = false;
   final List<String> topics = ['Topic 1', 'Topic 2'];
+  late UdpService _udpService;
+  bool connStatus = false;
 
   List<Map<String, dynamic>> _events = [];
   List<Map<String, dynamic>> _reminders = [];
@@ -40,8 +44,11 @@ class _CommState extends State<CommMode> {
   @override
   void initState() {
     super.initState();
-    _loadEventsAndReminders();
     _loadAccessories();
+    _udpService = UdpService();
+    _udpService.initializeUdpClient(_onMessageReceived, true).then((_) {
+      _checkConnection();
+    });
   }
 
   void _addTopic() {
@@ -86,6 +93,12 @@ class _CommState extends State<CommMode> {
             icon: Icon(Icons.add),
             onPressed: _addTopic,
           ),
+          IconButton(
+              onPressed: _checkConnection,
+              icon: Icon(
+                Icons.connect_without_contact,
+                color: connStatus ? Colors.green : Colors.red,
+              )),
           Switch(
             value: isVoice,
             activeColor: Colors.purple,
@@ -99,5 +112,26 @@ class _CommState extends State<CommMode> {
       ),
       body: isVoice ? VoiceView(topics: topics) : TextView(topics: topics),
     );
+  }
+
+  void _checkConnection() {
+    _udpService.sendUdpMessage("Check Connection", "Connection Status");
+    // Set a timeout to update the connection status if no response is received
+    Timer(Duration(seconds: 10), () {
+      if (!connStatus) {
+        setState(() {
+          connStatus = false; // No response, assume disconnected
+        });
+      }
+    });
+  }
+
+  _onMessageReceived(String message) {
+    print('Received response: $message');
+    if (message == "Connection Confirmed") {
+      setState(() {
+        connStatus = true;
+      });
+    }
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../Services/udp.dart';
@@ -21,6 +23,7 @@ class _TextScreenState extends State<TextView> {
   final EventManager _eventManager = EventManager();
   String? _locationAddress;
   final ScrollController _scrollController = ScrollController();
+  bool connStatus = false;
 
   @override
   void initState() {
@@ -71,12 +74,9 @@ class _TextScreenState extends State<TextView> {
       String messageWithInfoAndReminders = await _eventManager
           .addInfoEventsAndReminders(messageWithOptionalLocation);
 
-      _udpService.sendUdpMessage(
-        messageWithInfoAndReminders,
-        widget.topics[_selectedIndex],
-        '10.0.0.70', // Server IP address
-        8765, // Server port
-      );
+      _udpService.sendUdpMessage(messageWithInfoAndReminders,
+          widget.topics[_selectedIndex] // Server port
+          );
 
       _scrollToBottom();
     }
@@ -143,13 +143,12 @@ class ChatView extends StatelessWidget {
   final ScrollController scrollController;
   final bool isDarkMode;
 
-  ChatView({
-    required this.chatHistory,
-    required this.onSendMessage,
-    required this.isGettingLocation,
-    required this.scrollController,
-    required this.isDarkMode,
-  });
+  ChatView(
+      {required this.chatHistory,
+      required this.onSendMessage,
+      required this.isGettingLocation,
+      required this.scrollController,
+      required this.isDarkMode});
 
   @override
   Widget build(BuildContext context) {

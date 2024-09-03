@@ -79,11 +79,9 @@ class _VoiceViewState extends State<VoiceView> {
           .addInfoEventsAndReminders(messageWithOptionalLocation);
 
       _udpService.sendUdpMessage(
-        "${message} note that the response will be read out to me aloud, so please keep it as short as possible without letting useful infomation let out. Also dont use contraction, use proper words so that i can understand it better",
-        widget.topics[_selectedIndex],
-        '10.0.0.70', // Server IP address
-        8765, // Server port
-      );
+          "${message} note that the response will be read out to me aloud, so please keep it as short as possible without letting useful infomation let out. Also dont use contraction, use proper words so that i can understand it better",
+          widget.topics[_selectedIndex] // Server port
+          );
 
       _scrollToBottom();
     }

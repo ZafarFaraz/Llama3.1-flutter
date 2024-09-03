@@ -14,7 +14,7 @@ os.makedirs(CONVERSATION_DIR, exist_ok=True)
 conversation_contexts = {}
 
 def start_udp_server():
-    udp_ip = "10.0.0.70"  # Your server's IP address
+    udp_ip = "10.0.0.73"  # Your server's IP address
     udp_port = 8765
     buffer_size = 1024
 
@@ -44,6 +44,12 @@ def start_udp_server():
             print(f"Failed to decode JSON: {e}")
             # Send an error response back to the client
             sock.sendto(b"Error: Invalid JSON format", addr)
+            continue
+
+        # Handle "Check Connection" message
+        if topic == "Connection Status" and content == "Check Connection":
+            response_text = "Connection Confirmed"
+            sock.sendto(response_text.encode(), addr)
             continue
 
         # Handle the message and generate a response
