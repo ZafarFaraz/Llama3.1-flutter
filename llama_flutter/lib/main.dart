@@ -36,15 +36,13 @@ class _CommState extends State<CommMode> {
   late UdpService _udpService;
   bool connStatus = false;
 
-  List<Map<String, dynamic>> _events = [];
-  List<Map<String, dynamic>> _reminders = [];
-  Map<String, Map<String, List<Map<String, String>>>> _homeAccessories = {};
   String? _selectedHome;
 
   @override
   void initState() {
     super.initState();
     _loadAccessories();
+    _loadEventsAndReminders();
     _udpService = UdpService();
     _udpService.initializeUdpClient(_onMessageReceived, true).then((_) {
       _checkConnection();
@@ -58,11 +56,11 @@ class _CommState extends State<CommMode> {
   }
 
   Future<void> _loadAccessories() async {
-    final homeAccessories = await HomeManager.fetchAccessories();
+    final HomeManager _homeManager = HomeManager();
+    _homeManager.loadedAccessories = await HomeManager.fetchAccessories();
     setState(() {
-      _homeAccessories = homeAccessories;
-      if (_homeAccessories.isNotEmpty) {
-        _selectedHome = _homeAccessories.keys.first;
+      if (_homeManager.loadedAccessories.isNotEmpty) {
+        _selectedHome = _homeManager.loadedAccessories.keys.first;
       }
     });
   }
@@ -70,14 +68,9 @@ class _CommState extends State<CommMode> {
   Future<void> _loadEventsAndReminders() async {
     final EventManager _eventManager = EventManager();
     try {
-      List<Map<String, dynamic>> reminders =
-          await _eventManager.loadReminders();
-      print(
-          reminders); // Now this should print a correctly typed list of reminders.
+      _eventManager.loadedReminders = await _eventManager.loadReminders();
 
-      List<Map<String, dynamic>> events =
-          await _eventManager.loadUpcomingEvents();
-      print("Upcoming Events: $events");
+      _eventManager.loadedEvents = await _eventManager.loadUpcomingEvents();
     } catch (e) {
       print("Error loading reminders: $e");
     }

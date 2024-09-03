@@ -38,6 +38,8 @@ class Utils {
 }
 
 class EventManager {
+  List<Map<String, dynamic>> loadedEvents = [];
+  List<Map<String, dynamic>> loadedReminders = [];
   Future<List<Map<String, dynamic>>> loadReminders() async {
     try {
       final List<dynamic> result =
@@ -87,6 +89,7 @@ class EventManager {
 }
 
 class HomeManager {
+  Map<String, Map<String, List<Map<String, String>>>> loadedAccessories = {};
   // Fetch accessories from the native side and group them by home and room
   static Future<Map<String, Map<String, List<Map<String, String>>>>>
       fetchAccessories() async {
