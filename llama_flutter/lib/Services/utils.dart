@@ -126,10 +126,10 @@ class HomeManager {
   }
 
   static void handleMessage(String message) {
-    _parseAndExecuteCommand(message);
+    parseAndExecuteCommand(message);
   }
 
-  static void _parseAndExecuteCommand(String message) {
+  static void parseAndExecuteCommand(String message) {
     String lowerMessage = message.toLowerCase();
 
     bool isTurnOn = lowerMessage.contains('turn on');
@@ -143,7 +143,7 @@ class HomeManager {
           .trim();
 
       // Assume the room is known and is 'Living room'
-      String roomName = 'Living room';
+      String roomName = 'Study';
 
       // Call the native method to toggle the accessory
       _toggleAccessory(accessoryName, roomName, isTurnOn);

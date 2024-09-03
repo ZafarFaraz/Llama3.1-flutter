@@ -61,12 +61,16 @@ class _TextScreenState extends State<TextView> {
 
   Future<void> _sendMessage(String message) async {
     if (message.isNotEmpty) {
-      setState(() {
-        _chatHistories[widget.topics[_selectedIndex]]?.add({
-          'role': 'user',
-          'content': message,
+      if (Utils.alteringHomeDevices(message)) {
+        HomeManager.parseAndExecuteCommand(message);
+      } else {
+        setState(() {
+          _chatHistories[widget.topics[_selectedIndex]]?.add({
+            'role': 'user',
+            'content': message,
+          });
         });
-      });
+      }
 
       String messageWithOptionalLocation =
           await _locationService.addLocationData(message);
