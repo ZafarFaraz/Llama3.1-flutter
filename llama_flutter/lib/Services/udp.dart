@@ -6,6 +6,8 @@ import 'package:flutter_tts/flutter_tts.dart';
 class UdpService {
   late UDP _udpClient;
   late FlutterTts _flutterTts;
+  String udpAddress = "10.0.0.73";
+  int udpPort = 8765;
 
   UdpService() {
     _flutterTts = FlutterTts();
@@ -15,7 +17,7 @@ class UdpService {
   Future<void> _initializeTts() async {
     await _flutterTts.setVoice({"name": "Oliver", "locale": "en-GB"});
     await _flutterTts.setPitch(0.8); // Adjust pitch as needed
-    await _flutterTts.setSpeechRate(0.55); // Adjust speech rate as needed
+    await _flutterTts.setSpeechRate(0.35); // Adjust speech rate as needed
 
     await _flutterTts.setIosAudioCategory(
       IosTextToSpeechAudioCategory.playback,
@@ -72,19 +74,24 @@ class UdpService {
     }
   }
 
-  Future<void> sendUdpMessage(
-      String message, String topic, String address, int port) async {
+  Future<void> sendUdpMessage(String message, String topic) async {
+    // Await the Future<String> to get the actual string value
+    final String messageContent = message;
+
+    // Create the JSON payload with the resolved message content
     final jsonPayload = jsonEncode({
       'topic': topic,
-      'content': message,
+      'content': messageContent,
     });
+
+    print("The message sent was $jsonPayload");
 
     // Send the message via UDP
     await _udpClient.send(
       jsonPayload.codeUnits,
       Endpoint.unicast(
-        InternetAddress(address), // Server IP address
-        port: Port(port), // Server port
+        InternetAddress(udpAddress), // Server IP address
+        port: Port(udpPort), // Server port
       ),
     );
   }

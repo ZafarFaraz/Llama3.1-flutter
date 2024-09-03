@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
-import '../Services/location.dart';
 import '../Services/udp.dart';
 import '../Services/utils.dart';
 
@@ -21,6 +20,8 @@ class _VoiceViewState extends State<VoiceView> {
   late UdpService _udpService;
   late LocationService _locationService;
   String? _locationAddress;
+
+  final EventManager _eventManager = EventManager();
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _controller = TextEditingController();
 
@@ -71,23 +72,16 @@ class _VoiceViewState extends State<VoiceView> {
             ?.add({'role': 'user', 'content': message});
       });
 
-      if (Utils.requiresLocationData(message)) {
-        _locationAddress = await _locationService.fetchAndStoreLocation();
-      }
-
       String messageWithOptionalLocation =
-          "${message} note that the response will be read out to me aloud, so please keep it as short as possible without letting useful infomation let out. Also dont use contraction, use proper words so that i can understand it better";
+          await _locationService.addLocationData(message);
 
-      if (_locationAddress != null && Utils.requiresLocationData(message)) {
-        messageWithOptionalLocation = '$message\nLocation: $_locationAddress';
-      }
+      String messageWithInfoAndReminders = await _eventManager
+          .addInfoEventsAndReminders(messageWithOptionalLocation);
 
       _udpService.sendUdpMessage(
-        messageWithOptionalLocation,
-        widget.topics[_selectedIndex],
-        '10.0.0.122', // Server IP address
-        8765, // Server port
-      );
+          "${message} note that the response will be read out to me aloud, so please keep it as short as possible without letting useful infomation let out. Also dont use contraction, use proper words so that i can understand it better",
+          widget.topics[_selectedIndex] // Server port
+          );
 
       _scrollToBottom();
     }

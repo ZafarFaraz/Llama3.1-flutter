@@ -1,6 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:location/location.dart' as loc;
 
 const MethodChannel _platform = MethodChannel('jarvis_data');
 
@@ -35,6 +38,8 @@ class Utils {
 }
 
 class EventManager {
+  List<Map<String, dynamic>> loadedEvents = [];
+  List<Map<String, dynamic>> loadedReminders = [];
   Future<List<Map<String, dynamic>>> loadReminders() async {
     try {
       final List<dynamic> result =
@@ -59,9 +64,32 @@ class EventManager {
       throw Exception("Failed to load upcoming events: ${e.message}");
     }
   }
+
+  Future<String> addInfoEventsAndReminders(String message) async {
+    String lowerMessage = message.toLowerCase();
+    final EventManager _eventManager = EventManager();
+
+    if (['looking'].any((keyword) => lowerMessage.contains(keyword))) {
+      final reminders = await _eventManager.loadReminders();
+      final events = await _eventManager.loadUpcomingEvents();
+
+      // Construct a valid JSON string for events and reminders
+      final eventsJson = jsonEncode(events);
+      final remindersJson = jsonEncode(reminders);
+
+      // Sanitize the input message to remove or escape problematic characters
+      String sanitizedMessage = lowerMessage.replaceAll("'", "\\'");
+
+      // Construct the final message, ensuring it's safe for JSON inclusion
+      return "$sanitizedMessage. Here is some information from my calendar for the upcoming year: $eventsJson and my due reminders: $remindersJson";
+    } else {
+      return lowerMessage;
+    }
+  }
 }
 
 class HomeManager {
+  Map<String, Map<String, List<Map<String, String>>>> loadedAccessories = {};
   // Fetch accessories from the native side and group them by home and room
   static Future<Map<String, Map<String, List<Map<String, String>>>>>
       fetchAccessories() async {
@@ -159,13 +187,59 @@ class HomeManager {
       callback(false);
     }
   }
+}
 
-  // Send the summary back to the AI model
-  static void _sendSummaryToAI(String summary, [Function(String)? onSummary]) {
-    // This could involve sending it to a server, logging it, or any other mechanism depending on your AI model setup
-    print("Summary sent to AI: $summary");
-    if (onSummary != null) {
-      onSummary(summary);
+class LocationService {
+  String? _locationAddress;
+
+  Future<String?> fetchAndStoreLocation() async {
+    loc.Location location = loc.Location(); // Use the alias here
+    bool _serviceEnabled;
+    loc.PermissionStatus _permissionGranted;
+
+    _serviceEnabled = await location.serviceEnabled();
+    if (!_serviceEnabled) {
+      _serviceEnabled = await location.requestService();
+      if (!_serviceEnabled) {
+        return null;
+      }
+    }
+
+    _permissionGranted = await location.hasPermission();
+    if (_permissionGranted == loc.PermissionStatus.denied) {
+      _permissionGranted = await location.requestPermission();
+      if (_permissionGranted != loc.PermissionStatus.granted) {
+        return null;
+      }
+    }
+
+    loc.LocationData locationData = await location.getLocation();
+
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        locationData.latitude!,
+        locationData.longitude!,
+      );
+
+      Placemark place = placemarks[0];
+      _locationAddress =
+          "${place.locality}, ${place.postalCode}, ${place.country}";
+      return _locationAddress;
+    } catch (e) {
+      print('Failed to get address: $e');
+      return 'Address unavailable';
+    }
+  }
+
+  Future<String> addLocationData(message) async {
+    String lowermessage =
+        message.toLowerCase().replaceAll(RegExp(r'[^\w\s]'), '');
+    if (['location', 'weather', 'near me']
+        .any((keyword) => lowermessage.contains(keyword))) {
+      String? locationAddress = await fetchAndStoreLocation();
+      return '$message my location is: $_locationAddress';
+    } else {
+      return lowermessage;
     }
   }
 }

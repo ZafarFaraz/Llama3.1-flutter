@@ -1,6 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
-import '../Services/location.dart';
 import '../Services/udp.dart';
 import '../Services/utils.dart';
 
@@ -10,19 +11,19 @@ class TextView extends StatefulWidget {
   const TextView({super.key, required this.topics});
 
   @override
-  _UdpChatScreenState createState() => _UdpChatScreenState();
+  _TextScreenState createState() => _TextScreenState();
 }
 
-class _UdpChatScreenState extends State<TextView> {
+class _TextScreenState extends State<TextView> {
   int _selectedIndex = 0;
   final Map<String, List<Map<String, String>>> _chatHistories = {};
 
   late UdpService _udpService;
   late LocationService _locationService;
+  final EventManager _eventManager = EventManager();
   String? _locationAddress;
   final ScrollController _scrollController = ScrollController();
-  Map<String, Map<String, List<Map<String, String>>>> _homeAccessories = {};
-  String? _selectedHome;
+  bool connStatus = false;
 
   @override
   void initState() {
@@ -30,19 +31,8 @@ class _UdpChatScreenState extends State<TextView> {
     _udpService = UdpService();
     _locationService = LocationService();
     _udpService.initializeUdpClient(_onMessageReceived, true);
-    _loadAccessories();
     widget.topics.forEach((topic) {
       _chatHistories[topic] = [];
-    });
-  }
-
-  Future<void> _loadAccessories() async {
-    final homeAccessories = await HomeManager.fetchAccessories();
-    setState(() {
-      _homeAccessories = homeAccessories;
-      if (_homeAccessories.isNotEmpty) {
-        _selectedHome = _homeAccessories.keys.first;
-      }
     });
   }
 
@@ -78,21 +68,15 @@ class _UdpChatScreenState extends State<TextView> {
         });
       });
 
-      if (Utils.requiresLocationData(message)) {
-        _locationAddress = await _locationService.fetchAndStoreLocation();
-      }
+      String messageWithOptionalLocation =
+          await _locationService.addLocationData(message);
 
-      String messageWithOptionalLocation = message;
-      if (_locationAddress != null && Utils.requiresLocationData(message)) {
-        messageWithOptionalLocation = '$message\nLocation: $_locationAddress';
-      }
+      String messageWithInfoAndReminders = await _eventManager
+          .addInfoEventsAndReminders(messageWithOptionalLocation);
 
-      _udpService.sendUdpMessage(
-        messageWithOptionalLocation,
-        widget.topics[_selectedIndex],
-        '10.0.0.122', // Server IP address
-        8765, // Server port
-      );
+      _udpService.sendUdpMessage(messageWithInfoAndReminders,
+          widget.topics[_selectedIndex] // Server port
+          );
 
       _scrollToBottom();
     }
@@ -159,108 +143,147 @@ class ChatView extends StatelessWidget {
   final ScrollController scrollController;
   final bool isDarkMode;
 
-  ChatView({
-    required this.chatHistory,
-    required this.onSendMessage,
-    required this.isGettingLocation,
-    required this.scrollController,
-    required this.isDarkMode,
-  });
+  ChatView(
+      {required this.chatHistory,
+      required this.onSendMessage,
+      required this.isGettingLocation,
+      required this.scrollController,
+      required this.isDarkMode});
 
   @override
   Widget build(BuildContext context) {
     TextEditingController _controller = TextEditingController();
 
     return Container(
-        margin: EdgeInsets.all(20),
-        decoration: BoxDecoration(
-            borderRadius: BorderRadius.all(Radius.circular(20)),
-            boxShadow: [
-              BoxShadow(
-                  color: isDarkMode
-                      ? Colors.greenAccent.withAlpha(200)
-                      : Colors.greenAccent.withAlpha(250),
-                  blurRadius: 25.0,
-                  spreadRadius: 10.0,
-                  offset: const Offset(0.0, 0.0)),
-            ],
-            color: isDarkMode ? Colors.black : Colors.grey),
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Expanded(
-                child: ListView.builder(
-                  controller: scrollController, // Attach the scroll controller
-                  itemCount: chatHistory.length,
-                  itemBuilder: (context, index) {
-                    final message = chatHistory[index];
-                    final isUser = message['role'] == 'user';
-                    return Align(
-                      alignment:
-                          isUser ? Alignment.centerRight : Alignment.centerLeft,
-                      child: Container(
-                        padding: EdgeInsets.all(10),
-                        margin: EdgeInsets.all(15),
-                        decoration: BoxDecoration(
-                          color: isUser
-                              ? const Color.fromARGB(255, 36, 91, 37)
-                              : Colors.grey[800],
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(message['content'] ?? ''),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _controller,
-                        decoration: InputDecoration(
-                          hintText: 'Type a message',
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30)),
-                        ),
-                        onSubmitted: (text) {
-                          if (text.isNotEmpty) {
-                            onSendMessage(text);
-                            _controller.clear();
-                            _scrollToBottom(); // Scroll to the bottom after submitting a message
-                          }
-                        },
-                      ),
-                    ),
-                    SizedBox(
-                      width: 20,
-                    ),
-                    CircleAvatar(
-                      backgroundColor: Colors.green,
-                      radius: 30,
-                      child: IconButton(
-                        icon: Icon(
-                          Icons.send,
-                          size: 30,
-                        ),
-                        onPressed: () {
-                          if (_controller.text.isNotEmpty) {
-                            onSendMessage(_controller.text);
-                            _controller.clear();
-                            _scrollToBottom(); // Scroll to the bottom after sending a message
-                          }
-                        },
-                      ),
-                    )
-                  ],
-                ),
-              ),
-            ],
+      margin: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.all(Radius.circular(20)),
+        boxShadow: [
+          BoxShadow(
+            color: isDarkMode
+                ? Colors.greenAccent.withAlpha(200)
+                : Colors.greenAccent.withAlpha(250),
+            blurRadius: 25.0,
+            spreadRadius: 10.0,
+            offset: const Offset(0.0, 0.0),
           ),
-        ));
+        ],
+        color: isDarkMode ? Colors.black : Colors.grey,
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView.builder(
+                controller: scrollController, // Attach the scroll controller
+                itemCount: chatHistory.length,
+                itemBuilder: (context, index) {
+                  final message = chatHistory[index];
+                  final isUser = message['role'] == 'user';
+                  final content = message['content'] ?? '';
+
+                  return Align(
+                    alignment:
+                        isUser ? Alignment.centerRight : Alignment.centerLeft,
+                    child: Container(
+                      padding: EdgeInsets.all(10),
+                      margin: EdgeInsets.all(15),
+                      decoration: BoxDecoration(
+                        color: isUser
+                            ? const Color.fromARGB(255, 36, 91, 37)
+                            : Colors.grey[800],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: _buildMessageContent(content),
+                    ),
+                  );
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      decoration: InputDecoration(
+                        hintText: 'Type a message',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      onSubmitted: (text) {
+                        if (text.isNotEmpty) {
+                          onSendMessage(text);
+                          _controller.clear();
+                          _scrollToBottom(); // Scroll to the bottom after submitting a message
+                        }
+                      },
+                    ),
+                  ),
+                  SizedBox(width: 20),
+                  CircleAvatar(
+                    backgroundColor: Colors.green,
+                    radius: 30,
+                    child: IconButton(
+                      icon: Icon(Icons.send, size: 30),
+                      onPressed: () {
+                        if (_controller.text.isNotEmpty) {
+                          onSendMessage(_controller.text);
+                          _controller.clear();
+                          _scrollToBottom(); // Scroll to the bottom after sending a message
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMessageContent(String content) {
+    if (content.contains('```')) {
+      // Split the content on triple backticks to identify code blocks
+      final parts = content.split('```');
+      List<Widget> formattedContent = [];
+
+      for (int i = 0; i < parts.length; i++) {
+        if (i % 2 == 0) {
+          // Regular text
+          formattedContent.add(Text(parts[i]));
+        } else {
+          // Code block
+          formattedContent.add(Container(
+            width: double.infinity,
+            color: isDarkMode ? Colors.black54 : Colors.grey[300],
+            padding: EdgeInsets.all(8),
+            margin: EdgeInsets.symmetric(vertical: 5),
+            child: SelectableText(
+              parts[i],
+              style: TextStyle(
+                fontFamily: 'Courier',
+                backgroundColor: Colors.transparent,
+                color: isDarkMode ? Colors.greenAccent : Colors.black,
+              ),
+            ),
+          ));
+        }
+      }
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: formattedContent,
+      );
+    } else {
+      // Regular message without code block
+      return Text(content);
+    }
   }
 
   void _scrollToBottom() {
