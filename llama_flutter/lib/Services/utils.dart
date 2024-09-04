@@ -90,6 +90,7 @@ class EventManager {
 
 class HomeManager {
   Map<String, Map<String, List<Map<String, String>>>> loadedAccessories = {};
+
   // Fetch accessories from the native side and group them by home and room
   static Future<Map<String, Map<String, List<Map<String, String>>>>>
       fetchAccessories() async {
@@ -125,37 +126,53 @@ class HomeManager {
     return homeAccessories;
   }
 
-  static void handleMessage(String message) {
-    parseAndExecuteCommand(message);
-  }
+  void handleLLMActionResponse(String response) {
+    print("Received response: $response");
+    try {
+      // Extract action, device_name, room_name, and state using RegExp
+      final actionMatch =
+          RegExp(r'action\s+(\w+)', caseSensitive: false).firstMatch(response);
+      final deviceMatch =
+          RegExp(r'device_name\s+([^\n]+)', caseSensitive: false)
+              .firstMatch(response);
+      final roomMatch = RegExp(r'room_name\s+([^\n]+)', caseSensitive: false)
+          .firstMatch(response);
+      final stateMatch =
+          RegExp(r'state\s+(\w+)', caseSensitive: false).firstMatch(response);
 
-  static void parseAndExecuteCommand(String message) {
-    String lowerMessage = message.toLowerCase();
+      if (actionMatch != null &&
+          deviceMatch != null &&
+          roomMatch != null &&
+          stateMatch != null) {
+        final String action = actionMatch.group(1)!.toLowerCase();
+        final String deviceName = deviceMatch.group(1)!.trim().toLowerCase();
+        final String roomName = roomMatch.group(1)!.trim().toLowerCase();
+        final String state = stateMatch.group(1)!.toLowerCase();
 
-    bool isTurnOn = lowerMessage.contains('turn on');
-    bool isTurnOff = lowerMessage.contains('turn off');
+        // Handle the toggle action
+        if (action == "toggle") {
+          bool turnOn = (state == "on");
+          _toggleAccessory(deviceName, 'Living room', turnOn);
+        }
 
-    if (isTurnOn || isTurnOff) {
-      // Extract the accessory name
-      String accessoryName = message
-          .replaceFirst('turn on ', '')
-          .replaceFirst('turn off ', '')
-          .trim();
-
-      // Assume the room is known and is 'Living room'
-      String roomName = 'Study';
-
-      // Call the native method to toggle the accessory
-      _toggleAccessory(accessoryName, roomName, isTurnOn);
+        print(
+            "Parsed response: action=$action, device=$deviceName, room=$roomName, state=$state");
+      } else {
+        print("Unable to extract necessary information from the response.");
+      }
+    } catch (e) {
+      print("Error parsing LLM action response: $e");
     }
   }
 
+  // Toggle accessory on or off without verifying if it exists
   static void _toggleAccessory(
       String accessoryName, String roomName, bool turnOn) {
     try {
       _platform.invokeMethod('toggleAccessory', {
         'name': accessoryName,
         'room': roomName,
+        'state': turnOn ? 'on' : 'off',
       }).then((result) {
         print(
             '${turnOn ? 'Turned on' : 'Turned off'} $accessoryName in $roomName');
@@ -164,27 +181,6 @@ class HomeManager {
       });
     } catch (e) {
       print("Error: $e");
-    }
-  }
-
-  // Fetch the current state of the accessory
-  static void _fetchAccessoryState(
-      String accessoryName, Function(bool) callback) {
-    try {
-      _platform.invokeMethod('getAccessoryState', {
-        'name': accessoryName,
-        'room': 'Living Room',
-      }).then((state) {
-        bool currentState = state as bool;
-        callback(currentState);
-      }).catchError((error) {
-        print('Failed to fetch state for $accessoryName: $error');
-        callback(
-            false); // Assuming false as a fallback, depending on your needs
-      });
-    } catch (e) {
-      print("Error: $e");
-      callback(false);
     }
   }
 }

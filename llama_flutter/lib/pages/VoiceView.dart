@@ -67,16 +67,12 @@ class _VoiceViewState extends State<VoiceView> {
 
   Future<void> _sendMessage(String message) async {
     if (message.isNotEmpty) {
-      if (Utils.alteringHomeDevices(message)) {
-        HomeManager.parseAndExecuteCommand(message);
-      } else {
-        setState(() {
-          _chatHistories[widget.topics[_selectedIndex]]?.add({
-            'role': 'user',
-            'content': message,
-          });
+      setState(() {
+        _chatHistories[widget.topics[_selectedIndex]]?.add({
+          'role': 'user',
+          'content': message,
         });
-      }
+      });
 
       String messageWithOptionalLocation =
           await _locationService.addLocationData(message);

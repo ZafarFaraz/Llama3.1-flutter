@@ -74,8 +74,42 @@ class UdpService {
     }
   }
 
+  String sendIntroduction() {
+    // Construct the introduction string with home accessories and response format
+    final introductionData = {
+      "introduction":
+          "Hi, I'm Zafar and I live in Reservoir, Melbourne 3073. Here is some additional information about my home accessories to help you perform actions:",
+      "home_accessories": {
+        "Phantom Zone": {
+          "Living Room": ["Temporal Spark", "TV lights", "TV Lamp"],
+          "Default Room": ["Philips hue"],
+          "Study": ["Desk lamp"],
+          "Zafars Room": ["Bedroom lights"]
+        }
+      },
+      "action_format": {
+        "description":
+            "When an action needs to be performed, please send it back in the following format:",
+        "format": {
+          "action": "toggle",
+          "device_name": "TV Lamp",
+          "room_name": "Living room",
+          "state": "on"
+        }
+      }
+    };
+
+    // Use jsonEncode and format the result with indentation for readability
+    final jsonString =
+        const JsonEncoder.withIndent('  ').convert(introductionData);
+
+    // Log the formatted introduction message for debugging
+    print("The formatted introduction message is: \n$jsonString");
+
+    return jsonString;
+  }
+
   Future<void> sendUdpMessage(String message, String topic) async {
-    // Await the Future<String> to get the actual string value
     final String messageContent = message;
 
     // Create the JSON payload with the resolved message content

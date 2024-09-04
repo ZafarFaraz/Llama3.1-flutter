@@ -21,6 +21,7 @@ class _TextScreenState extends State<TextView> {
   late UdpService _udpService;
   late LocationService _locationService;
   final EventManager _eventManager = EventManager();
+  late HomeManager _homeManager;
   String? _locationAddress;
   final ScrollController _scrollController = ScrollController();
   bool connStatus = false;
@@ -30,6 +31,7 @@ class _TextScreenState extends State<TextView> {
     super.initState();
     _udpService = UdpService();
     _locationService = LocationService();
+    _homeManager = HomeManager();
     _udpService.initializeUdpClient(_onMessageReceived, true);
     widget.topics.forEach((topic) {
       _chatHistories[topic] = [];
@@ -44,6 +46,7 @@ class _TextScreenState extends State<TextView> {
         'content': message,
       });
     });
+    _homeManager.handleLLMActionResponse(message);
     _scrollToBottom(); // Scroll to the bottom when a new message is added
   }
 
@@ -61,17 +64,16 @@ class _TextScreenState extends State<TextView> {
 
   Future<void> _sendMessage(String message) async {
     if (message.isNotEmpty) {
-      if (Utils.alteringHomeDevices(message)) {
-        HomeManager.parseAndExecuteCommand(message);
-      } else {
-        setState(() {
-          _chatHistories[widget.topics[_selectedIndex]]?.add({
-            'role': 'user',
-            'content': message,
-          });
+      setState(() {
+        _chatHistories[widget.topics[_selectedIndex]]?.add({
+          'role': 'user',
+          'content': message,
         });
-      }
+      });
 
+      if (_chatHistories[widget.topics[_selectedIndex]]?.length == 1) {
+        message = message + _udpService.sendIntroduction();
+      }
       String messageWithOptionalLocation =
           await _locationService.addLocationData(message);
 

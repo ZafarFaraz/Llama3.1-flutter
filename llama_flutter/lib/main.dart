@@ -58,6 +58,7 @@ class _CommState extends State<CommMode> {
   Future<void> _loadAccessories() async {
     final HomeManager _homeManager = HomeManager();
     _homeManager.loadedAccessories = await HomeManager.fetchAccessories();
+    print("Loaded accessories: ${_homeManager.loadedAccessories}");
     setState(() {
       if (_homeManager.loadedAccessories.isNotEmpty) {
         _selectedHome = _homeManager.loadedAccessories.keys.first;
